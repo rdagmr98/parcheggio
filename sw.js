@@ -6,7 +6,7 @@ self.addEventListener('push', e => {
   e.waitUntil(Promise.all([
     caches.open('park').then(c => c.put('park', new Response(JSON.stringify(p)))),
     self.registration.showNotification('Auto parcheggiata',
-      { body: `Alle ${ora}, precisione ${p.acc} m. Tocca per Maps.`, tag: 'park', icon: 'icon.png', data: maps(p) }),
+      { body: `Alle ${ora}, precisione ${p.acc} m. Tocca per Maps.`, tag: 'park', icon: 'icon.png?v=2', data: maps(p) }),
   ]));
 });
 self.addEventListener('notificationclick', e => {
