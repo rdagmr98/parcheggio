@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "properties": {
+    "fatto": {"type": "array", "items": {"type": "string"}},
+    "verifiche": {"type": "array", "items": {"type": "object", "properties": {"nome": {"type": "string"}, "esito": {"type": "string"}}, "required": ["nome", "esito"]}},
+    "dubbi": {"type": "array", "items": {"type": "string"}},
+    "file_principali": {"type": "array", "items": {"type": "string"}},
+    "avvio_ms": {"type": "number"}
+  },
+  "required": ["fatto", "verifiche", "dubbi", "file_principali"]
+}

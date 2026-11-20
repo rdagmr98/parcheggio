@@ -1,0 +1,27 @@
+Sei un designer-sviluppatore Flutter senior con gusto da product design automotive premium. Devi scrivere la UI di "Parcheggio", app Android personale che ricorda dove è parcheggiata l'Audi A3 dell'utente. L'utente ha bocciato la versione precedente (una pagina web): "fa schifo quando la apro, è tutto lì sopra" — tre righe di testo ammassate in alto e il resto dello schermo nero vuoto. Il design è la parte importante di questo lavoro: sforzati.
+
+CARTELLA DI LAVORO: questa (progetto Flutter già creato). Puoi modificare SOLO `lib/` (anche più file) e creare `test/`. NON toccare `android/`, `pubspec.yaml`, l'icona. Dipendenze già scaricate e utilizzabili: flutter_map e latlong2 (oltre all'SDK Flutter). NON aggiungere altre dipendenze (niente intl, google_fonts, url_launcher, geolocator: la rete potrebbe non esserci e il lato Android è già fatto). Date e orari in italiano formattali a mano.
+
+COME FUNZIONA (già fatto lato Android, in Kotlin): quando il telefono si stacca dal Bluetooth dell'auto, l'app salva la posizione GPS del telefono e manda una notifica. La UI parla col nativo solo con `MethodChannel('park')`:
+- `get` -> String? JSON {"lat":double,"lon":double,"acc":int metri,"time":int epoch ms} dell'ultimo parcheggio, null se mai ricevuto.
+- `here` -> String? stesso JSON con la posizione attuale del telefono (può impiegare fino a 10 s; null se non disponibile).
+- `mark` -> String? salva la posizione attuale come parcheggio e la restituisce (fino a 15 s; null se fallisce). Serve se il Bluetooth non ha fatto il suo lavoro: azione secondaria, chiedere conferma prima di sovrascrivere un parcheggio esistente.
+- `navigate` -> apre Google Maps con il percorso a piedi verso l'auto.
+- `missing` -> List<String>, sottoinsieme di ["posizione","sempre","bluetooth","notifiche","batteria"]: cosa manca perché il rilevamento automatico funzioni ("sempre" = posizione "Consenti sempre", "batteria" = esclusione dall'ottimizzazione batteria).
+- `fix` -> chiede il prossimo permesso mancante (dialog di sistema o impostazioni). Dopo, quando l'app torna in primo piano, ricontrollare `missing`.
+Ricaricare `get`, `here` e `missing` all'avvio e a ogni ritorno in primo piano (AppLifecycleState.resumed).
+
+COSA DEVE MOSTRARE
+1. Mappa a tutto schermo come sfondo (flutter_map, tile scure CARTO `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png`, subdomains a,b,c,d, userAgentPackageName 'com.rdagmr98.parcheggio', attribuzione piccola e discreta "© OpenStreetMap © CARTO"), centrata sull'auto, con marker dell'auto curato (non il pin di default: es. cerchio rosso con glow/pulsazione e icona auto), cerchio di precisione (`acc`) semitrasparente, punto blu dell'utente se `here` è disponibile. Se ci sono entrambi, inquadrare auto e utente insieme. Bottone per ricentrare.
+2. Pannello in basso (zona del pollice) sopra la mappa, elegante, con: "Parcheggiata" + giorno/ora umani ("oggi alle 18:42", "ieri alle 9:05", "lunedì 17 novembre alle 8:30"), da quanto tempo ("da 2 h 15 min", aggiornato ogni minuto), distanza dall'utente e tempo a piedi a 5 km/h ("a 350 m · 5 min a piedi", "a 2,4 km"), precisione in piccolo. Azione primaria grande: "Portami all'auto" (navigate). Azione secondaria discreta: "Segna qui".
+3. Stato vuoto curato (nessun parcheggio ancora): mappa sulla posizione dell'utente se c'è, testo che spiega che alla prossima sosta la posizione arriva da sola quando il telefono si stacca dal Bluetooth dell'auto, e "Segna qui".
+4. Se `missing` non è vuoto: un avviso ben integrato (non un muro di testo) che dice cosa manca in italiano chiaro e un bottone che chiama `fix`.
+5. Caricamento di `here` senza bloccare la UI; numeri con la virgola decimale italiana.
+
+STILE: premium automotive tipo interfacce Audi (virtual cockpit / MMI): fondo nero e grafite, superfici in vetro scuro (blur leggero) o grigi antracite, accento rosso Audi #BB0A30 usato con parsimonia, testi bianchi e grigi, tipografia sottile e ariosa (pesi 300/400 per i titoli grandi, maiuscoletto spaziato per le etichette), angoli generosi, spazi ampi, gerarchia chiara: l'ora/la distanza sono il dato protagonista. Solo tema scuro. Animazioni sobrie (comparsa del pannello, pulsazione del marker). Barra di stato e di navigazione trasparenti sopra la mappa (edge-to-edge, rispettare i SafeArea). Niente loghi Audi nella UI. Titolo app "Parcheggio".
+
+SCHERMI: Galaxy Z Fold5. Schermo esterno ~402x1029 dp (stretto e alto), interno ~805x967 dp (quasi quadrato). Il layout deve essere bello su entrambi: sull'interno valuta pannello laterale invece che in basso (LayoutBuilder). Niente overflow: nessun testo in Row senza Flexible/ellipsis, niente labelText in campi stretti.
+
+VERIFICHE OBBLIGATORIE prima di finire: `flutter analyze` senza problemi; un test widget in `test/` che monta l'app con il MethodChannel simulato (TestDefaultBinaryMessengerBinding) in due casi (parcheggio presente / assente) e alle due dimensioni di schermo, e verifica che non ci siano overflow né eccezioni (le tile di rete nei test vanno evitate o non devono far fallire il test); `flutter test` verde. Non fare build APK e non usare git: ci penso io.
+
+Rispondi con il JSON richiesto: cosa hai fatto, esito delle verifiche, dubbi, file principali.
