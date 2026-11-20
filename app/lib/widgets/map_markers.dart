@@ -75,17 +75,14 @@ class _CarBeaconMarkerState extends State<CarBeaconMarker>
                 ),
               ),
             ),
-            // Medaglione auto con ghiera scura e centro rosso Audi.
+            // Foto frontale dell'A3 (assets/auto.jpg) con cornice rosso Audi.
             Container(
-              width: 40,
-              height: 40,
+              width: 70,
+              height: 45,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.bgObsidian,
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.22),
-                  width: 1.2,
-                ),
+                borderRadius: BorderRadius.circular(10),
+                color: AppColors.audiRed,
+                border: Border.all(color: AppColors.audiRedBright, width: 2),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.65),
@@ -98,25 +95,9 @@ class _CarBeaconMarkerState extends State<CarBeaconMarker>
                   ),
                 ],
               ),
-              padding: const EdgeInsets.all(3),
-              child: DecoratedBox(
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.audiRedBright,
-                      AppColors.audiRed,
-                      AppColors.audiRedDark,
-                    ],
-                  ),
-                ),
-                child: const Icon(
-                  Icons.directions_car_rounded,
-                  size: 19,
-                  color: Colors.white,
-                ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset('assets/auto.jpg', fit: BoxFit.cover),
               ),
             ),
           ],
