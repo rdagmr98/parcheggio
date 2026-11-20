@@ -19,7 +19,7 @@ Future<void> font(String family, List<String> files) async {
 void main() {
   final now = DateTime(2026, 11, 20, 20, 57);
   final car = {'lat': 42.4207, 'lon': 12.1077, 'acc': 12, 'time': DateTime(2026, 11, 20, 18, 42).millisecondsSinceEpoch};
-  final me = {'lat': 42.4231, 'lon': 12.1052, 'acc': 6, 'time': now.millisecondsSinceEpoch};
+  final me = {'lat': 42.4209, 'lon': 12.1079, 'acc': 6, 'time': now.millisecondsSinceEpoch};
 
   setUpAll(() async {
     await font('Roboto', ['roboto-light.ttf', 'roboto-regular.ttf', 'roboto-medium.ttf', 'roboto-bold.ttf']);

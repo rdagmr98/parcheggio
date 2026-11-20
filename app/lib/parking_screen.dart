@@ -16,6 +16,7 @@ import 'widgets/map_markers.dart';
 const LatLng _kDefaultItalyCenter = LatLng(42.5, 12.5);
 const double _kDefaultItalyZoom = 5.6;
 const double _kFocusSingleZoom = 17.0;
+const double _kMaxZoom = 22.0;
 const double _kWideBreakpoint = 640.0;
 const double _kSidePanelWidth = 352.0;
 
@@ -290,27 +291,16 @@ class _ParkingScreenState extends State<ParkingScreen>
     double targetZoom;
 
     if (parked != null && here != null) {
-      final dist = calculateDistanceMeters(parked.latLng, here.latLng);
-      if (dist < 25) {
-        final target = _offsetSinglePointCamera(
-          camera: currentCamera,
-          point: parked.latLng,
-          zoom: _kFocusSingleZoom,
-          fitPadding: fitPadding,
-        );
-        targetCenter = target.center;
-        targetZoom = target.zoom;
-      } else {
-        final bounds = LatLngBounds.fromPoints([parked.latLng, here.latLng]);
-        final fitted = CameraFit.bounds(
-          bounds: bounds,
-          padding: fitPadding,
-          maxZoom: 17.5,
-          minZoom: 4.0,
-        ).fit(currentCamera);
-        targetCenter = fitted.center;
-        targetZoom = fitted.zoom;
-      }
+      // Senza tile lo zoom è libero: i due punti riempiono sempre lo schermo,
+      // anche a pochi metri (prima a 26 m l'auto copriva il pallino).
+      final fitted = CameraFit.bounds(
+        bounds: LatLngBounds.fromPoints([parked.latLng, here.latLng]),
+        padding: fitPadding,
+        maxZoom: _kMaxZoom,
+        minZoom: 4.0,
+      ).fit(currentCamera);
+      targetCenter = fitted.center;
+      targetZoom = fitted.zoom;
     } else {
       final point = (parked ?? here)!.latLng;
       final target = _offsetSinglePointCamera(
@@ -458,31 +448,10 @@ class _ParkingScreenState extends State<ParkingScreen>
     final parked = _parked;
     final here = _here;
 
-    final circles = <CircleMarker>[
-      if (here != null && here.acc > 0)
-        CircleMarker(
-          point: here.latLng,
-          radius: here.acc.toDouble(),
-          useRadiusInMeter: true,
-          color: AppColors.userBlue.withValues(alpha: 0.10),
-          borderColor: AppColors.userBlue.withValues(alpha: 0.28),
-          borderStrokeWidth: 1,
-        ),
-      if (parked != null && parked.acc > 0)
-        CircleMarker(
-          point: parked.latLng,
-          radius: parked.acc.toDouble(),
-          useRadiusInMeter: true,
-          color: AppColors.audiRed.withValues(alpha: 0.13),
-          borderColor: AppColors.audiRed.withValues(alpha: 0.42),
-          borderStrokeWidth: 1.2,
-        ),
-    ];
-
+    // ponytail: niente cerchi di precisione, senza mappa a zoom alto coprono lo
+    // schermo; la precisione è scritta nel pannello.
     final polylines = <Polyline>[
-      if (parked != null &&
-          here != null &&
-          calculateDistanceMeters(parked.latLng, here.latLng) >= 15)
+      if (parked != null && here != null)
         Polyline(
           points: [here.latLng, parked.latLng],
           strokeWidth: 2.0,
@@ -516,7 +485,7 @@ class _ParkingScreenState extends State<ParkingScreen>
         initialCenter: _kDefaultItalyCenter,
         initialZoom: _kDefaultItalyZoom,
         minZoom: 3,
-        maxZoom: 20,
+        maxZoom: _kMaxZoom,
         backgroundColor: AppColors.mapCanvas,
         interactionOptions: const InteractionOptions(
           flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
@@ -534,7 +503,6 @@ class _ParkingScreenState extends State<ParkingScreen>
       ),
       children: [
         // ponytail: niente tile (CARTO ora vuole la API key), sfondo nero voluto.
-        if (circles.isNotEmpty) CircleLayer(circles: circles),
         if (polylines.isNotEmpty) PolylineLayer(polylines: polylines),
         if (markers.isNotEmpty) MarkerLayer(markers: markers),
       ],
