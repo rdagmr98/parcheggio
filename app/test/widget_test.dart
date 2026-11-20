@@ -3,7 +3,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parcheggio/formatters.dart';
 import 'package:parcheggio/main.dart';
@@ -15,14 +14,6 @@ const MethodChannel _parkChannel = MethodChannel('park');
 
 const Size _foldCoverSize = Size(402, 1029);
 const Size _foldInnerSize = Size(805, 967);
-
-/// TileProvider offline deterministico per i test: evita chiamate di rete.
-class _OfflineTileProvider extends TileProvider {
-  @override
-  ImageProvider getImage(TileCoordinates coordinates, TileLayer options) {
-    return MemoryImage(TileProvider.transparentImage);
-  }
-}
 
 void _setScreenSize(WidgetTester tester, Size size) {
   tester.view.physicalSize = size;
@@ -217,7 +208,6 @@ void main() {
 
       await tester.pumpWidget(
         ParcheggioApp(
-          tileProvider: _OfflineTileProvider(),
           clock: () => fixedNow,
         ),
       );
@@ -235,7 +225,6 @@ void main() {
       expect(find.textContaining('5 min a piedi'), findsOneWidget);
       expect(find.text("Portami all'auto"), findsOneWidget);
       expect(find.text('Segna qui'), findsOneWidget);
-      expect(find.text('© OpenStreetMap © CARTO'), findsOneWidget);
       expect(find.byType(CarBeaconMarker), findsOneWidget);
       expect(find.byType(UserLocationDot), findsOneWidget);
       expect(find.byType(RecenterMapButton), findsOneWidget);
@@ -276,7 +265,6 @@ void main() {
 
       await tester.pumpWidget(
         ParcheggioApp(
-          tileProvider: _OfflineTileProvider(),
           clock: () => fixedNow,
         ),
       );
@@ -316,7 +304,6 @@ void main() {
 
       await tester.pumpWidget(
         ParcheggioApp(
-          tileProvider: _OfflineTileProvider(),
           clock: () => fixedNow,
         ),
       );
@@ -343,7 +330,6 @@ void main() {
 
       await tester.pumpWidget(
         ParcheggioApp(
-          tileProvider: _OfflineTileProvider(),
           clock: () => fixedNow,
         ),
       );
@@ -383,7 +369,6 @@ void main() {
 
         await tester.pumpWidget(
           ParcheggioApp(
-            tileProvider: _OfflineTileProvider(),
             clock: () => fixedNow,
           ),
         );
@@ -434,7 +419,6 @@ void main() {
 
         await tester.pumpWidget(
           ParcheggioApp(
-            tileProvider: _OfflineTileProvider(),
             clock: () => fixedNow,
           ),
         );
@@ -481,7 +465,6 @@ void main() {
               textScaler: TextScaler.linear(1.35),
             ),
             child: ParcheggioApp(
-              tileProvider: _OfflineTileProvider(),
               clock: () => fixedNow,
             ),
           ),
@@ -533,7 +516,6 @@ void main() {
 
         await tester.pumpWidget(
           ParcheggioApp(
-            tileProvider: _OfflineTileProvider(),
             clock: () => fixedNow,
           ),
         );

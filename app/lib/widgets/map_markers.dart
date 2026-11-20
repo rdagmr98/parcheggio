@@ -35,8 +35,8 @@ class _CarBeaconMarkerState extends State<CarBeaconMarker>
     return Semantics(
       label: 'Posizione auto parcheggiata',
       child: SizedBox(
-        width: 88,
-        height: 88,
+        width: 110,
+        height: 110,
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -75,31 +75,8 @@ class _CarBeaconMarkerState extends State<CarBeaconMarker>
                 ),
               ),
             ),
-            // Foto frontale dell'A3 (assets/auto.jpg) con cornice rosso Audi.
-            Container(
-              width: 70,
-              height: 45,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: AppColors.audiRed,
-                border: Border.all(color: AppColors.audiRedBright, width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.65),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                  BoxShadow(
-                    color: AppColors.audiRed.withValues(alpha: 0.45),
-                    blurRadius: 14,
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.asset('assets/auto.jpg', fit: BoxFit.cover),
-              ),
-            ),
+            // L'A3 scontornata (assets/auto.png) in miniatura.
+            Image.asset('assets/auto.png', width: 100),
           ],
         ),
       ),

@@ -250,32 +250,6 @@ class RecenterMapButton extends StatelessWidget {
   }
 }
 
-/// Attribuzione piccola e discreta per OpenStreetMap / CARTO.
-class AttributionBadge extends StatelessWidget {
-  const AttributionBadge({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.bgObsidian.withValues(alpha: 0.58),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.hairline(0.06)),
-      ),
-      child: Text(
-        '© OpenStreetMap © CARTO',
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: AppTypography.caption.copyWith(
-          fontSize: 10,
-          color: AppColors.textSecondary.withValues(alpha: 0.72),
-        ),
-      ),
-    );
-  }
-}
-
 /// Pannello principale (in basso su schermo stretto, laterale su schermo aperto).
 class ParkingInfoPanel extends StatelessWidget {
   const ParkingInfoPanel({

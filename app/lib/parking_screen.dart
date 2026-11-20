@@ -23,14 +23,10 @@ class ParkingScreen extends StatefulWidget {
   const ParkingScreen({
     super.key,
     this.service = const ParkService(),
-    this.tileProvider,
     this.clock,
   });
 
   final ParkService service;
-
-  /// Consente di sostituire il TileProvider (es. nei widget test offline).
-  final TileProvider? tileProvider;
 
   /// Sorgente temporale iniettabile per test deterministici.
   final DateTime Function()? clock;
@@ -42,8 +38,6 @@ class ParkingScreen extends StatefulWidget {
 class _ParkingScreenState extends State<ParkingScreen>
     with WidgetsBindingObserver, TickerProviderStateMixin {
   final MapController _mapController = MapController();
-  late final TileProvider _tileProvider;
-  late final bool _ownsTileProvider;
 
   late final AnimationController _panelEntranceController;
   late final Animation<double> _panelFade;
@@ -61,8 +55,7 @@ class _ParkingScreenState extends State<ParkingScreen>
   bool _isMarking = false;
   bool _mapReady = false;
   bool _hasAutoFramed = false;
-  bool _hasFramedBoth = false;
-  bool? _lastIsWide;
+  Size? _lastSize;
 
   int _hereRequestSeq = 0;
   int _getRequestSeq = 0;
@@ -74,14 +67,6 @@ class _ParkingScreenState extends State<ParkingScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-
-    if (widget.tileProvider != null) {
-      _tileProvider = widget.tileProvider!;
-      _ownsTileProvider = false;
-    } else {
-      _tileProvider = NetworkTileProvider(silenceExceptions: true);
-      _ownsTileProvider = true;
-    }
 
     _now = _currentTime();
 
@@ -105,7 +90,7 @@ class _ParkingScreenState extends State<ParkingScreen>
       });
     });
 
-    _refreshAll(reframeOnChange: true);
+    _refreshAll();
   }
 
   @override
@@ -115,31 +100,29 @@ class _ParkingScreenState extends State<ParkingScreen>
     _cameraAnimController?.dispose();
     _panelEntranceController.dispose();
     _mapController.dispose();
-    if (_ownsTileProvider) {
-      _tileProvider.dispose();
-    }
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _refreshAll(reframeOnChange: false);
+      _refreshAll();
     }
   }
 
   /// Ricarica `get`, `missing` e `here` in parallelo senza mai bloccare la UI.
-  void _refreshAll({required bool reframeOnChange}) {
+  /// Ogni risposta reinquadra auto + posizione: la vista segue sempre i due punti.
+  void _refreshAll() {
     if (mounted) {
       setState(() {
         _now = _currentTime();
       });
     }
-    unawaited(_loadParkedAndMissing(reframeOnChange: reframeOnChange));
+    unawaited(_loadParkedAndMissing());
     unawaited(_loadHere());
   }
 
-  Future<void> _loadParkedAndMissing({required bool reframeOnChange}) async {
+  Future<void> _loadParkedAndMissing() async {
     final seq = ++_getRequestSeq;
     final results = await Future.wait<Object?>([
       widget.service.getParked(),
@@ -149,7 +132,6 @@ class _ParkingScreenState extends State<ParkingScreen>
 
     final parked = results[0] as ParkPoint?;
     final missing = results[1] as List<String>;
-    final parkedChanged = parked != _parked;
     final wasLoadingInitial = _isLoadingInitial;
 
     setState(() {
@@ -163,12 +145,7 @@ class _ParkingScreenState extends State<ParkingScreen>
       _panelEntranceController.forward();
     }
 
-    if (reframeOnChange || parkedChanged || !_hasAutoFramed) {
-      if (parkedChanged) {
-        _hasFramedBoth = false;
-      }
-      _scheduleFrameMap(animate: _hasAutoFramed);
-    }
+    _scheduleFrameMap(animate: _hasAutoFramed);
   }
 
   Future<void> _loadHere() async {
@@ -188,13 +165,7 @@ class _ParkingScreenState extends State<ParkingScreen>
       _now = _currentTime();
     });
 
-    if (here != null) {
-      final shouldFrameBoth = _parked != null && !_hasFramedBoth;
-      final shouldFrameUserOnly = _parked == null && !_hasAutoFramed;
-      if (shouldFrameBoth || shouldFrameUserOnly) {
-        _scheduleFrameMap(animate: _hasAutoFramed);
-      }
-    }
+    if (here != null) _scheduleFrameMap(animate: _hasAutoFramed);
   }
 
   Future<void> _handleMarkPressed() async {
@@ -226,7 +197,6 @@ class _ParkingScreenState extends State<ParkingScreen>
         _isLoadingInitial = false;
         _now = _currentTime();
       });
-      _hasFramedBoth = false;
       _scheduleFrameMap(animate: true);
       _showToast('Posizione del parcheggio salvata');
     } else {
@@ -320,7 +290,6 @@ class _ParkingScreenState extends State<ParkingScreen>
     double targetZoom;
 
     if (parked != null && here != null) {
-      _hasFramedBoth = true;
       final dist = calculateDistanceMeters(parked.latLng, here.latLng);
       if (dist < 25) {
         final target = _offsetSinglePointCamera(
@@ -437,10 +406,11 @@ class _ParkingScreenState extends State<ParkingScreen>
         body: LayoutBuilder(
           builder: (context, constraints) {
             final isWide = constraints.maxWidth >= _kWideBreakpoint;
-            if (_lastIsWide != null && _lastIsWide != isWide) {
+            // Schermo esterno/interno, rotazione: reinquadra sulle nuove misure.
+            if (_lastSize != null && _lastSize != constraints.biggest) {
               _scheduleFrameMap(animate: false);
             }
-            _lastIsWide = isWide;
+            _lastSize = constraints.biggest;
 
             return Stack(
               fit: StackFit.expand,
@@ -533,8 +503,8 @@ class _ParkingScreenState extends State<ParkingScreen>
       if (parked != null)
         Marker(
           point: parked.latLng,
-          width: 88,
-          height: 88,
+          width: 110,
+          height: 110,
           alignment: Alignment.center,
           child: const CarBeaconMarker(),
         ),
@@ -563,18 +533,7 @@ class _ParkingScreenState extends State<ParkingScreen>
         },
       ),
       children: [
-        TileLayer(
-          urlTemplate:
-              'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-          subdomains: const ['a', 'b', 'c', 'd'],
-          userAgentPackageName: 'com.rdagmr98.parcheggio',
-          maxNativeZoom: 20,
-          maxZoom: 20,
-          tileProvider: _tileProvider,
-          tileDisplay: const TileDisplay.fadeIn(
-            duration: Duration(milliseconds: 220),
-          ),
-        ),
+        // ponytail: niente tile (CARTO ora vuole la API key), sfondo nero voluto.
         if (circles.isNotEmpty) CircleLayer(circles: circles),
         if (polylines.isNotEmpty) PolylineLayer(polylines: polylines),
         if (markers.isNotEmpty) MarkerLayer(markers: markers),
@@ -614,19 +573,12 @@ class _ParkingScreenState extends State<ParkingScreen>
             // Spazio libero per interagire con la mappa sottostante.
             const Spacer(),
 
-            // Attribuzione discreta a sinistra e pulsante ricentra a destra,
-            // subito sopra al pannello.
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                const Flexible(child: AttributionBadge()),
-                if (_parked != null || _here != null) ...[
-                  const SizedBox(width: 12),
-                  RecenterMapButton(onPressed: () => _frameMap(animate: true)),
-                ],
-              ],
-            ),
+            // Pulsante ricentra a destra, subito sopra al pannello.
+            if (_parked != null || _here != null)
+              Align(
+                alignment: Alignment.centerRight,
+                child: RecenterMapButton(onPressed: () => _frameMap(animate: true)),
+              ),
             const SizedBox(height: 10),
 
             // Pannello principale con animazione di comparsa sobria.
@@ -722,23 +674,14 @@ class _ParkingScreenState extends State<ParkingScreen>
               ),
             ),
 
-            // Controllo ricentra + attribuzione in basso a destra sulla mappa.
-            Align(
-              alignment: Alignment.bottomRight,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  if (_parked != null || _here != null) ...[
-                    RecenterMapButton(
-                      onPressed: () => _frameMap(animate: true),
-                    ),
-                    const SizedBox(height: 10),
-                  ],
-                  const AttributionBadge(),
-                ],
+            // Controllo ricentra in basso a destra sulla mappa.
+            if (_parked != null || _here != null)
+              Align(
+                alignment: Alignment.bottomRight,
+                child: RecenterMapButton(
+                  onPressed: () => _frameMap(animate: true),
+                ),
               ),
-            ),
           ],
         ),
       ),

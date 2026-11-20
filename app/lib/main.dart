@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_map/flutter_map.dart';
 
 import 'park_service.dart';
 import 'parking_screen.dart';
@@ -27,12 +26,10 @@ class ParcheggioApp extends StatelessWidget {
   const ParcheggioApp({
     super.key,
     this.service = const ParkService(),
-    this.tileProvider,
     this.clock,
   });
 
   final ParkService service;
-  final TileProvider? tileProvider;
   final DateTime Function()? clock;
 
   @override
@@ -45,7 +42,6 @@ class ParcheggioApp extends StatelessWidget {
       darkTheme: buildAppTheme(),
       home: ParkingScreen(
         service: service,
-        tileProvider: tileProvider,
         clock: clock,
       ),
     );

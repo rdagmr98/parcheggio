@@ -1,9 +1,8 @@
-// Anteprime PNG della UI con font e tile veri: flutter test --update-goldens test/preview_test.dart -> test/preview/*.png
+// Anteprime PNG della UI con font veri: flutter test --update-goldens test/preview_test.dart -> test/preview/*.png
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parcheggio/main.dart';
 
@@ -23,7 +22,6 @@ void main() {
   final me = {'lat': 42.4231, 'lon': 12.1052, 'acc': 6, 'time': now.millisecondsSinceEpoch};
 
   setUpAll(() async {
-    HttpOverrides.global = null; // tile vere
     await font('Roboto', ['roboto-light.ttf', 'roboto-regular.ttf', 'roboto-medium.ttf', 'roboto-bold.ttf']);
     await font('MaterialIcons', ['materialicons-regular.otf']);
   });
@@ -45,7 +43,7 @@ void main() {
                 'missing' => missing,
                 _ => null,
               });
-      await t.pumpWidget(ParcheggioApp(tileProvider: NetworkTileProvider(cachingProvider: const DisabledMapCachingProvider()), clock: () => now));
+      await t.pumpWidget(ParcheggioApp(clock: () => now));
       for (var i = 0; i < 6; i++) {
         await t.runAsync(() => Future.delayed(const Duration(seconds: 1)));
         await t.pump(const Duration(milliseconds: 300));

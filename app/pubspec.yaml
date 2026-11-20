@@ -59,7 +59,7 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-    - assets/auto.jpg
+    - assets/auto.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
